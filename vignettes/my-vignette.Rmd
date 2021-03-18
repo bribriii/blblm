@@ -1,5 +1,5 @@
 ---
-title: "my-vignette"
+title: "The bag of little bootstraps for linear regression(blblm)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{my-vignette}
@@ -17,3 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(blblm)
 ```
+
+### Introduction on package blblm
+It is a package that applies BLB on Linear Regression Model and hopefully on Logistic Regression Model as well. There are two main functions `blblm()` and `blbglm()` used for Linear Regression Model and hopefully on Logistic Regression Model respectively. I've only finished `blblm()`, the `blbglm()` is still on progress.
+
