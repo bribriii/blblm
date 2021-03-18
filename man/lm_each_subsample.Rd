@@ -2,10 +2,22 @@
 % Please edit documentation in R/blblm.R
 \name{lm_each_subsample}
 \alias{lm_each_subsample}
-\title{compute the estimates}
+\title{compute the estimates for each subsample}
 \usage{
 lm_each_subsample(formula, data, n, B)
 }
+\arguments{
+\item{formula}{formula being passed from blblm}
+
+\item{data}{data}
+
+\item{n}{number of rows for data}
+
+\item{B}{number of bootstraps}
+}
+\value{
+a list of lm objects
+}
 \description{
-compute the estimates
+compute the estimates for each subsample
 }

@@ -1,5 +1,7 @@
 #' @import purrr
 #' @import stats
+#' @import furrr
+#' @import future
 #' @importFrom magrittr %>%
 #' @details
 #' Linear Regression with Little Bag of Bootstraps
@@ -11,12 +13,30 @@
 utils::globalVariables(c("."))
 
 
+#' @param formula formula to use in blblm
+#'
+#' @param data data to use
+#' @param m number of splits
+#' @param B number of boostraps
+#' @param Parallel boolean value that specifies whether to use parallelization
+#'
+#' @return blblm object
 #' @export
-blblm <- function(formula, data, m = 10, B = 5000) {
+#'
+#' @examples
+#' blblm(mpg ~ wt * hp, data = mtcars, m = 3, B = 100, Parallel = FALSE)
+#' blblm(mpg ~ wt * hp, data = mtcars, m = 3, B = 100, Parallel = TRUE)
+blblm <- function(formula, data, m = 10, B = 5000, Parallel = FALSE){
   data_list <- split_data(data, m)
-  estimates <- map(
-    data_list,
-    ~ lm_each_subsample(formula = formula, data = ., n = nrow(data), B = B))
+  if(Parallel){
+    estimates <- future_map(
+      data_list,
+      ~ lm_each_subsample(formula = formula, data = ., n = nrow(data), B = B))
+  }else{
+    estimates <- map(
+      data_list,
+      ~ lm_each_subsample(formula = formula, data = ., n = nrow(data), B = B))
+  }
   res <- list(estimates = estimates, formula = formula)
   class(res) <- "blblm"
   invisible(res)
@@ -24,13 +44,28 @@ blblm <- function(formula, data, m = 10, B = 5000) {
 
 
 #' split data into m parts of approximated equal sizes
+#'
+#' @param data data
+#' @param m number of splits
+#'
+#' @return list of splited data
+#'
 split_data <- function(data, m) {
   idx <- sample.int(m, nrow(data), replace = TRUE)
   data %>% split(idx)
 }
 
 
-#' compute the estimates
+#' compute the estimates for each subsample
+#'
+#' @param formula formula being passed from blblm
+#' @param data data
+#' @param n number of rows for data
+#' @param B number of bootstraps
+#'
+#' @return a list of lm objects
+#'
+#'
 lm_each_subsample <- function(formula, data, n, B) {
   # drop the original closure of formula,
   # otherwise the formula will pick a wrong variable from the global scope.
@@ -43,6 +78,13 @@ lm_each_subsample <- function(formula, data, n, B) {
 
 
 #' compute the regression estimates for a blb dataset
+#'
+#' @param X explanatory variable
+#' @param y reponse variable
+#' @param n number of rows
+#'
+#' @return list consists of coefficient and sigma
+#'
 lm1 <- function(X, y, n) {
   freqs <- as.vector(rmultinom(1, n, rep(1, nrow(X))))
   fit <- lm.wfit(X, y, freqs)
@@ -89,8 +131,15 @@ sigma.blblm <- function(object, confidence = FALSE, level = 0.95, ...) {
   }
 }
 
+#' @param object fit object
+#'
+#' @param ... extra conditions
+#'
 #' @export
 #' @method coef blblm
+#'
+#' @examples
+#' coef(blblm(mpg ~ wt * hp, data = mtcars, m = 3, B = 100))
 coef.blblm <- function(object, ...) {
   est <- object$estimates
   map_mean(est, ~ map_cbind(., "coef") %>% rowMeans())

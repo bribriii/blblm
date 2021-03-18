@@ -1,3 +1,6 @@
-test_that("multiplication works", {
-  expect_equal(2 * 2, 4)
+test_that("blblm works", {
+  fitlm <- blblm(mpg ~ wt*hp, data = mtcars, m = 3, B = 100, Parallel = FALSE)
+  expect_s3_class(fitlm, "blblm")
+  colm <- coef(fitlm)
+  expect_equal(length(colm), 4)
 })
